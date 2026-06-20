@@ -16,13 +16,13 @@ uses Python's standard library.
 
 The server provides five MCP tools:
 
-| Tool | Description |
-| --- | --- |
-| `progress_summary` | Human-readable summary: total hours, streaks, pace (7/30/60-day + all-time), and milestone ETAs at the 60-day pace. |
-| `progress_stats` | Structured metrics: current total hours, pace per window (min/day), streaks, active days, daily-goal hit rate, and date range. |
-| `predict_milestone(target_hours, pace_window="60d")` | Predicts the date for an hours milestone. `pace_window` is one of `"7d"`, `"30d"`, `"60d"`, `"all"`. |
-| `milestone_table` | All standard milestones (50/150/300/600/1000/1500 h) with ETAs under three pace scenarios (7/30/60 days). |
-| `daily_data(last_n_days=30)` | Raw per-day data: date, minutes, goal reached, cumulative hours. |
+| Tool                                                                         | Description |
+|------------------------------------------------------------------------------| --- |
+| `progress_summary`                                                           | Human-readable summary: total hours, streaks, pace (7/30/60-day + all-time), and milestone ETAs at the 60-day pace. |
+| `progress_stats`                                                             | Structured metrics: current total hours, pace per window (min/day), streaks, active days, daily-goal hit rate, and date range. |
+| `predict_milestone(target_hours, pace_window="60d", only_active_days=False)` | Predicts the date for an hours milestone. `pace_window` is one of `"7d"`, `"30d"`, `"60d"`, `"all"`. |
+| `milestone_table`                                                            | All standard milestones (50/150/300/600/1000/1500 h) with ETAs under three pace scenarios (7/30/60 days). |
+| `daily_data(last_n_days=30)`                                                 | Raw per-day data: date, minutes, goal reached, cumulative hours. |
 
 All projections are simple linear extrapolations — the further out the
 milestone, the less reliable the estimate.

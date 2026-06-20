@@ -175,16 +175,20 @@ def _fmt_hm(seconds: float) -> str:
 # --- MCP-Tools -------------------------------------------------------------
 
 @mcp.tool()
-def progress_summary() -> str:
+def progress_summary(only_active_days: bool = False) -> str:
     """Liefert eine lesbare Zusammenfassung des Dreaming-Spanish-Fortschritts:
     Gesamtstunden, Streaks, Tempo (7/30/60 Tage, gesamt) und Meilenstein-ETAs
-    unter dem 60-Tage-Tempo."""
+    unter dem 60-Tage-Tempo.
+
+    only_active_days: Wenn true, zählen für Tempo und ETA nur Tage mit
+                      Watchtime >0s."""
     c = _load()
     s, ext, goal = c["series"], c["external_s"], c["goal_s"]
     total_h = s[-1]["cumulative_hours"]
     cur_streak, long_streak = _streaks(s)
     active = sum(1 for r in s if r["seconds"] > 0)
-    paces = {k: _trailing_avg_seconds(s, w) for k, w in PACE_WINDOWS.items()}
+    paces = {k: _trailing_avg_seconds(s, w, only_active_days)
+             for k, w in PACE_WINDOWS.items()}
 
     lines = [
         f"Zeitraum: {s[0]['date']} bis {s[-1]['date']} ({len(s)} Tage, {active} aktiv)",
@@ -205,14 +209,17 @@ def progress_summary() -> str:
 
 
 @mcp.tool()
-def progress_stats() -> dict:
+def progress_stats(only_active_days: bool = False) -> dict:
     """Strukturierte Kennzahlen: aktuelle Gesamtstunden, Tempo über mehrere
     Fenster (7/30/60 Tage, gesamt) in Minuten/Tag, Streaks, aktive Tage,
-    Ziel-Erreichungsquote und Datumsspanne."""
+    Ziel-Erreichungsquote und Datumsspanne.
+
+    only_active_days: Wenn true, mittelt das Tempo nur über Tage mit
+                      Watchtime >0s."""
     c = _load()
     s, goal_s = c["series"], c["goal_s"]
     cur_streak, long_streak = _streaks(s)
-    paces_min = {k: round(_trailing_avg_seconds(s, w) / 60, 1)
+    paces_min = {k: round(_trailing_avg_seconds(s, w, only_active_days) / 60, 1)
                  for k, w in PACE_WINDOWS.items()}
     goal_days = sum(1 for r in s if r["goalReached"])
     return {
@@ -238,6 +245,7 @@ def predict_milestone(target_hours: float, pace_window: str = "60d", only_active
     pace_window: Tempo-Fenster — eines von "7d", "30d", "60d", "all"
                  (Standard "60d"). Bestimmt, über wie viele letzte Tage der
                  Tagesdurchschnitt gemittelt wird.
+    only_active_days: Wenn true, werden nur Tage mit Watchtime >0s berücksichtigt.
 
     Hinweis: lineare Hochrechnung; reale Daten schwanken, je weiter in der
     Zukunft, desto unsicherer.
@@ -253,13 +261,17 @@ def predict_milestone(target_hours: float, pace_window: str = "60d", only_active
 
 
 @mcp.tool()
-def milestone_table() -> dict:
+def milestone_table(only_active_days: bool = False) -> dict:
     """Alle Standard-Meilensteine (50/150/300/600/1000/1500 h) mit ETA unter
-    drei Tempo-Szenarien (7, 30, 60 Tage) — gibt die Spannweite der Prognose."""
+    drei Tempo-Szenarien (7, 30, 60 Tage) — gibt die Spannweite der Prognose.
+
+    only_active_days: Wenn true, zählen für die Tempi nur Tage mit
+                      Watchtime >0s."""
     c = _load()
     s = c["series"]
     windows = {"7d": 7, "30d": 30, "60d": 60}
-    paces = {k: _trailing_avg_seconds(s, w) for k, w in windows.items()}
+    paces = {k: _trailing_avg_seconds(s, w, only_active_days)
+             for k, w in windows.items()}
     table = {}
     for m in MILESTONES_H:
         table[str(m)] = {k: _predict(s, m, paces[k]).get("eta")
