@@ -121,8 +121,11 @@ def _load(force: bool = False) -> dict:
 
 # --- Analyse-Helfer --------------------------------------------------------
 
-def _trailing_avg_seconds(series: list[dict], days: int | None) -> float:
+def _trailing_avg_seconds(series: list[dict], days: int | None, only_active_days: bool = False) -> float:
     rows = series if days is None else series[-days:]
+    if only_active_days:
+        rows = [r for r in rows if r["seconds"] != 0]
+
     return sum(r["seconds"] for r in rows) / len(rows) if rows else 0.0
 
 
@@ -228,7 +231,7 @@ def progress_stats() -> dict:
 
 
 @mcp.tool()
-def predict_milestone(target_hours: float, pace_window: str = "60d") -> dict:
+def predict_milestone(target_hours: float, pace_window: str = "60d", only_active_days: bool = False) -> dict:
     """Prognostiziert das Datum für einen Stunden-Meilenstein.
 
     target_hours: Zielwert in Stunden (z. B. 150, 300, oder beliebig).
@@ -243,7 +246,7 @@ def predict_milestone(target_hours: float, pace_window: str = "60d") -> dict:
         return {"error": f"pace_window muss eines sein von {list(PACE_WINDOWS)}."}
     c = _load()
     s = c["series"]
-    pace_s = _trailing_avg_seconds(s, PACE_WINDOWS[pace_window])
+    pace_s = _trailing_avg_seconds(s, PACE_WINDOWS[pace_window], only_active_days)
     result = _predict(s, float(target_hours), pace_s)
     result["pace_window"] = pace_window
     return result
